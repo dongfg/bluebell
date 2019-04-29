@@ -1,0 +1,42 @@
+openapi: 3.0.0
+# Added by API Auto Mocking Plugin
+servers:
+  - description: SwaggerHub API Auto Mocking
+    url: https://virtserver.swaggerhub.com/dongfg/bluebell/0.1.0
+info:
+  version: "0.1.0"
+  title: Bluebell
+  contact:
+    email: api@dongfg.com
+  license:
+    name: MIT
+    url: 'https://github.com/dongfg/api/blob/master/LICENSE'
+tags:
+  - name: system
+    description: System Level Api
+paths:
+  /health:
+    get:
+      tags:
+        - system
+      summary: System status for service discovery
+      operationId: health
+      responses:
+        '200':
+          description: system status
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/HealthEndpoint'
+externalDocs:
+  description: Source Code On Github
+  url: 'https://github.com/dongfg'
+components:
+  schemas:
+    HealthEndpoint:
+      type: object
+      properties:
+        status:
+          type: string
+          description: System Status
+          example: 'Normal'

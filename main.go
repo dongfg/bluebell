@@ -55,7 +55,8 @@ func loadConfig(client *consul.Consul) config {
 
 func setupRouter() *gin.Engine {
 	r := gin.Default()
-
+	r.StaticFile("/", "public/index.html")
+	r.StaticFile("/swagger.yml", "public/swagger.yml")
 	return r
 }
 
