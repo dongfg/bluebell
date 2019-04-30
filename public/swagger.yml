@@ -3,12 +3,16 @@ openapi: 3.0.0
 servers:
   - description: SwaggerHub API Auto Mocking
     url: https://virtserver.swaggerhub.com/dongfg/bluebell/0.1.0
+  - description: Development API
+    url: http://localhost:9001
   - description: Production API
     url: https://api.dongfg.com
 info:
   version: "0.1.0"
   title: Bluebell
   contact:
+    url: "https://dongfg.com"
+    name: "dongfg"
     email: api@dongfg.com
   license:
     name: MIT
@@ -27,7 +31,7 @@ paths:
       tags:
         - System
       summary: System status for service discovery
-      operationId: health
+      operationId: healthCheck
       responses:
         '200':
           description: system status
@@ -40,7 +44,7 @@ paths:
       tags:
         - Series
       summary: 剧集搜索
-      description: search series by name
+      description: 名字模糊搜索
       operationId: seriesSearch
       parameters:
         - name: keyword
@@ -68,7 +72,7 @@ paths:
       parameters:
         - name: seriesId
           in: path
-          description: series id
+          description: 剧集ID
           required: true
           explode: true
           schema:
@@ -80,16 +84,16 @@ paths:
             'application/json':
               schema:
                 $ref: '#/components/schemas/Series'
-  '/series/episodes/{seriesId}':
+  '/series/{seriesId}/episodes':
     get:
       tags:
         - Series
       summary: 获取剧集下载地址
-      operationId: seriesDpisodes
+      operationId: seriesEpisodes
       parameters:
         - name: seriesId
           in: path
-          description: series id
+          description: 剧集ID
           required: true
           explode: true
           schema:
