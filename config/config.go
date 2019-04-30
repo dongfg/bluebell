@@ -16,6 +16,9 @@ type Config struct {
 		CheckUrl      string `yaml:"check-url"`
 		CheckInterval string `yaml:"check-interval"`
 	}
+	Series struct {
+		Domain string
+	}
 }
 
 func Load(client *consul.Consul) error {
