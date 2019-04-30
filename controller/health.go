@@ -13,11 +13,11 @@ type healthEndpoint struct {
 }
 
 func newHealthController(g *gin.RouterGroup) {
-	h := &healthController{}
-	g.GET("", h.Get)
+	c := &healthController{}
+	g.GET("", c.healthCheck)
 }
 
-func (h *healthController) Get(c *gin.Context) {
+func (controller *healthController) healthCheck(c *gin.Context) {
 	c.JSON(http.StatusOK, healthEndpoint{
 		Status: "Normal",
 	})
