@@ -8,6 +8,7 @@ require (
 	github.com/golang/protobuf v1.3.1 // indirect
 	github.com/hashicorp/consul/api v1.0.1
 	github.com/mattn/go-isatty v0.0.7 // indirect
+	github.com/sirupsen/logrus v1.4.1 // indirect
 	github.com/ugorji/go v1.1.4 // indirect
 	gopkg.in/go-playground/validator.v8 v8.18.2 // indirect
 	gopkg.in/yaml.v2 v2.2.2
