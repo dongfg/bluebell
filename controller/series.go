@@ -12,7 +12,9 @@ type seriesController struct {
 }
 
 type series struct {
-	Name string
+	Id     string
+	CnName string
+	EnName string
 }
 
 type seriesEpisodes struct {
@@ -43,7 +45,7 @@ func (controller *seriesController) seriesSearch(c *gin.Context) {
 
 	c.JSON(http.StatusOK, []series{
 		{
-			Name: keyword,
+			CnName: keyword,
 		},
 	})
 }
