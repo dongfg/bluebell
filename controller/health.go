@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-type HealthController struct {
+type healthController struct {
 }
 
 type healthEndpoint struct {
@@ -13,11 +13,11 @@ type healthEndpoint struct {
 }
 
 func newHealthController(g *gin.RouterGroup) {
-	h := &HealthController{}
+	h := &healthController{}
 	g.GET("", h.Get)
 }
 
-func (h *HealthController) Get(c *gin.Context) {
+func (h *healthController) Get(c *gin.Context) {
 	c.JSON(http.StatusOK, healthEndpoint{
 		Status: "Normal",
 	})
