@@ -36,7 +36,7 @@ func init() {
 
 func main() {
 	r := setupRouter()
-	controller.Setup(r)
+	controller.Register(r)
 	setupServer(&http.Server{
 		Addr:    fmt.Sprintf(":%d", c.Port),
 		Handler: r,
