@@ -12,6 +12,6 @@ go get xxx
 ### Release
 ```
 git tag -a v0.1.0 -m "First release"
-git push origin v0.1.0
+git push origin v2019.4.30
 goreleaser
 ```
