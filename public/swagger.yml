@@ -3,6 +3,8 @@ openapi: 3.0.0
 servers:
   - description: SwaggerHub API Auto Mocking
     url: https://virtserver.swaggerhub.com/dongfg/bluebell/0.1.0
+  - description: Production API
+    url: https://api.dongfg.com
 info:
   version: "0.1.0"
   title: Bluebell
@@ -11,14 +13,19 @@ info:
   license:
     name: MIT
     url: 'https://github.com/dongfg/api/blob/master/LICENSE'
+externalDocs:
+  description: Source Code On Github
+  url: 'https://github.com/dongfg'
 tags:
-  - name: system
+  - name: System
     description: System Level Api
+  - name: Series
+    description: 剧集搜索
 paths:
-  /health:
+  '/health':
     get:
       tags:
-        - system
+        - System
       summary: System status for service discovery
       operationId: health
       responses:
@@ -28,9 +35,74 @@ paths:
             'application/json':
               schema:
                 $ref: '#/components/schemas/HealthEndpoint'
-externalDocs:
-  description: Source Code On Github
-  url: 'https://github.com/dongfg'
+  '/series':
+    get:
+      tags:
+        - Series
+      summary: 剧集搜索
+      description: search series by name
+      operationId: seriesSearch
+      parameters:
+        - name: keyword
+          in: query
+          description: series name keyword
+          required: true
+          explode: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            'application/json':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Series'
+  '/series/{seriesId}':
+    get:
+      tags:
+        - Series
+      summary: 获取剧集基本信息
+      operationId: seriesDetail
+      parameters:
+        - name: seriesId
+          in: path
+          description: series id
+          required: true
+          explode: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Series'
+  '/series/episodes/{seriesId}':
+    get:
+      tags:
+        - Series
+      summary: 获取剧集下载地址
+      operationId: seriesDpisodes
+      parameters:
+        - name: seriesId
+          in: path
+          description: series id
+          required: true
+          explode: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            'application/json':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SeriesEpisodes'
 components:
   schemas:
     HealthEndpoint:
@@ -40,3 +112,71 @@ components:
           type: string
           description: System Status
           example: 'Normal'
+    Series:
+      type: object
+      description: 剧集基本信息
+      properties:
+        id:
+          type: string
+          description: ID
+          example: '10733'
+        poster:
+          type: string
+          description: 封面图
+          example: 'http://tu.jstucdn.com/ftp/2019/0322/b_d2b4282fe50dffaad4c73b6f3d6176ff.jpg'
+        link:
+          type: string
+          description: 链接
+          example: 'http://www.zmz2019.com/resource/10733'
+        rssLink:
+          type: string
+          description: 订阅链接
+          example: 'http://rss.rrys.tv/rss/feed/10733'
+        cnName:
+          type: string
+          description: 译名
+          example: '权力的游戏'
+        enName:
+          type: string
+          description: 原名
+          example: 'Game of Thrones'
+        playStatus:
+          type: string
+          description: 状态
+          example: '第8季连载中'
+        area:
+          type: string
+          description: 地区
+          example: '美国'
+        category:
+          type: string
+          description: 分类
+          example: '战争/剧情/魔幻/历史/古装/史诗'
+    SeriesEpisodes:
+      type: object
+      description: 剧集下载地址，单集可能包含多个资源，自行 group by (season+episode) 选择
+      properties:
+        seriesId:
+          type: string
+          description: 剧集ID
+          example: '10733'
+        name:
+          type: string
+          description: 文件名
+          example: '权力的游戏.Game.of.Thrones.S08E03.中英字幕.WEBrip.720P-人人影视.mp4'
+        season:
+          type: integer
+          description: 季
+          example: 8
+        episode:
+          type: integer
+          description: 集
+          example: 3
+        ed2k:
+          type: string
+          description: ed2k link
+          example: 'ed2k://|file|%E6%9D%83%E5%8A%9B%E7%9A%84%E6%B8%B8%E6%88%8F.Game.of.Thrones.S08E03.%E4%B8%AD%E8%8B%B1%E5%AD%97%E5%B9%95.WEBrip.720P-%E4%BA%BA%E4%BA%BA%E5%BD%B1%E8%A7%86.V1.mp4|1240802301|946a2ef12f9f128403a208c44c596b99|h=a7a7j5whhhih57fsl2eckv5mlnzzokgr|/'
+        magnet:
+          type: string
+          description: magnet link
+          example: 'magnet:?xt=urn:btih:702778ba56195ed3844bb92e059d320539c530ec'
