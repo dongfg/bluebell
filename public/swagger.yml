@@ -54,15 +54,46 @@ paths:
           explode: true
           schema:
             type: string
+        - name: details
+          in: query
+          description: return with details(will be slow)
+          required: false
+          explode: true
+          schema:
+            type: boolean
+            default: false
       responses:
         '200':
           description: successful operation
           content:
             'application/json':
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Series'
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Series'
+        '400':
+          description: missing required query parameter
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                msg: "missing required parameter 'keyword'"
+                timestamp: 1557038967
+        '500':
+          description: internal server error
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                msg: 'resource server not available'
+                timestamp: 1557038967
   '/series/{seriesId}':
     get:
       tags:
@@ -109,6 +140,15 @@ paths:
                   $ref: '#/components/schemas/SeriesEpisodes'
 components:
   schemas:
+    ApiResponse:
+      type: object
+      properties:
+        msg:
+          type: string
+          example: 'success'
+        timestamp:
+          type: integer
+          example: 1557038967
     HealthEndpoint:
       type: object
       properties:
