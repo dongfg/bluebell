@@ -2,6 +2,7 @@ package controller
 
 import (
 	"encoding/json"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
@@ -9,6 +10,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
 	"net/http"
+	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -27,8 +30,13 @@ type series struct {
 	Category   string `json:",omitempty"`
 }
 
-type seriesEpisodes struct {
+type seriesEpisode struct {
 	SeriesId string
+	Name     string
+	Season   int
+	Episode  int
+	Ed2k     string `json:",omitempty"`
+	Magnet   string `json:",omitempty"`
 }
 
 type seriesSearchQuery struct {
@@ -37,7 +45,7 @@ type seriesSearchQuery struct {
 }
 
 type seriesSearchResp struct {
-	Data [] struct {
+	Data []struct {
 		ItemId string `json:"itemid"`
 		Title  string
 		Poster string
@@ -46,6 +54,17 @@ type seriesSearchResp struct {
 
 type seriesPlayStatusResp struct {
 	PlayStatus string `json:"play_status"`
+}
+
+type seriesEpisodesResp struct {
+	XMLName xml.Name `xml:"rss"`
+	Channel struct {
+		Items []struct {
+			Title  string `xml:"title"`
+			Ed2k   string `xml:"ed2k"`
+			Magnet string `xml:"magnet"`
+		} `xml:"item"`
+	} `xml:"channel"`
 }
 
 func newSeriesController(g *gin.RouterGroup) {
@@ -65,14 +84,14 @@ func (controller *seriesController) seriesSearch(c *gin.Context) {
 
 	r, err := http.Get(url)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, fmt.Sprintf("资源服务器不可用: %s", err.Error()))
+		c.JSON(http.StatusInternalServerError, failed(fmt.Sprintf("资源服务器不可用: %s", err.Error())))
 		return
 	}
 	defer r.Body.Close()
 
 	var jsonResp seriesSearchResp
 	if err := json.NewDecoder(r.Body).Decode(&jsonResp); err != nil {
-		c.JSON(http.StatusInternalServerError, fmt.Sprintf("无法解析资源服务器返回的数据: %s", err.Error()))
+		c.JSON(http.StatusInternalServerError, failed(fmt.Sprintf("无法解析资源服务器返回的数据: %s", err.Error())))
 		return
 	}
 
@@ -80,16 +99,15 @@ func (controller *seriesController) seriesSearch(c *gin.Context) {
 
 	for i, item := range jsonResp.Data {
 		series := series{}
+		series.Id = item.ItemId
 		series.CnName = item.Title
+		// convert to large image
+		series.Poster = strings.ReplaceAll(item.Poster, "s_", "")
 		if query.Details {
-			series, err = seriesById(item.ItemId)
-			if err != nil {
+			if err := seriesFill(&series); err != nil {
 				continue
 			}
 		}
-		series.Id = item.ItemId
-		// convert to large image
-		series.Poster = strings.ReplaceAll(item.Poster, "s_", "")
 
 		seriesSearch[i] = series
 	}
@@ -99,27 +117,93 @@ func (controller *seriesController) seriesSearch(c *gin.Context) {
 
 func (controller *seriesController) seriesDetail(c *gin.Context) {
 	seriesId := c.Param("seriesId")
+	if seriesId == "" {
+		c.JSON(http.StatusBadRequest, failed("missing path param 'seriesId'"))
+		return
+	}
 
-	c.JSON(http.StatusOK, series{
-		CnName: seriesId,
-	})
+	series := series{
+		Id: seriesId,
+	}
+
+	if err := seriesFill(&series); err != nil {
+		c.JSON(http.StatusInternalServerError, failed(err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, series)
 }
 
 func (controller *seriesController) seriesEpisodes(c *gin.Context) {
 	seriesId := c.Param("seriesId")
+	if seriesId == "" {
+		c.JSON(http.StatusBadRequest, failed("missing path param 'seriesId'"))
+		return
+	}
 
-	c.JSON(http.StatusOK, []seriesEpisodes{
-		{
+	series := series{}
+	series.Id = seriesId
+	if err := seriesFill(&series); err != nil || series.RssLink == "" {
+		c.JSON(http.StatusInternalServerError, failed("rssLink not found"))
+		return
+	}
+
+	r, err := http.Get(series.RssLink)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, failed(fmt.Sprintf("rssLink无法访问: %s", err.Error())))
+		return
+	}
+	defer r.Body.Close()
+
+	var xmlResp seriesEpisodesResp
+
+	if err := xml.NewDecoder(r.Body).Decode(&xmlResp); err != nil {
+		c.JSON(http.StatusInternalServerError, failed(fmt.Sprintf("无法解析rss返回的数据: %s", err.Error())))
+		return
+	}
+
+	var seriesEpisodes = make([]seriesEpisode, len(xmlResp.Channel.Items))
+
+	seasonEpisodeParse := func(name string) (int, int) {
+		re := regexp.MustCompile(`(?m)[Ss](\d{1,3})[Ee](\d{1,3})`)
+		matches := re.FindStringSubmatch(name)
+		if len(matches) != 3 {
+			return -1, -1
+		}
+		season, err := strconv.Atoi(matches[1])
+		if err != nil {
+			season = -1
+		}
+		episode, err := strconv.Atoi(matches[2])
+		if err != nil {
+			episode = -1
+		}
+		return season, episode
+	}
+
+	for i, item := range xmlResp.Channel.Items {
+		season, episode := seasonEpisodeParse(item.Title)
+		seriesEpisodes[i] = seriesEpisode{
 			SeriesId: seriesId,
-		},
-	})
+			Name:     item.Title,
+			Season:   season,
+			Episode:  episode,
+			Ed2k:     item.Ed2k,
+			Magnet:   item.Magnet,
+		}
+	}
+
+	c.JSON(http.StatusOK, data(seriesEpisodes))
 }
 
-func seriesById(id string) (series, error) {
+func seriesFill(series *series) error {
+	if series.Id == "" {
+		return errors.New("series id must not empty")
+	}
 	playStatus := make(chan string, 1)
 	// get playStatus from api
 	go func() {
-		url := fmt.Sprintf("http://%s/resource/index_json/rid/%s/channel/tv", config.Basic.Series.Domain, id)
+		url := fmt.Sprintf("http://%s/resource/index_json/rid/%s/channel/tv", config.Basic.Series.Domain, series.Id)
 
 		r, err := http.Get(url)
 		if err != nil {
@@ -146,35 +230,29 @@ func seriesById(id string) (series, error) {
 	}()
 
 	// get detail from parse page
-	url := fmt.Sprintf("http://%s/resource/%s", config.Basic.Series.Domain, id)
+	url := fmt.Sprintf("http://%s/resource/%s", config.Basic.Series.Domain, series.Id)
 	r, err := http.Get(url)
 	if err != nil {
-		return series{}, err
+		return err
 	}
 	defer r.Body.Close()
 
 	doc, err := goquery.NewDocumentFromReader(r.Body)
 	if err != nil {
-		return series{}, err
+		return err
 	}
 	cnNameHtml, err := doc.Find(".resource-tit h2").Html()
 	if err != nil {
-		return series{}, errors.New("无法获取中文名")
+		return errors.New("无法获取中文名")
 	}
-	cnName := cnNameHtml[strings.Index(cnNameHtml, "《")+len("《") : strings.Index(cnNameHtml, "》")]
-	enName := doc.Find(".resource-con .fl-info li:nth-child(1) > strong").Text()
-	rssLink := doc.Find(".resource-tit h2 a").AttrOr("href", "")
-	area := doc.Find(".resource-con .fl-info li:nth-child(2) > strong").Text()
-	category := doc.Find(".resource-con .fl-info li:nth-child(6) > strong").Text()
-
-	return series{
-		Id:         id,
-		CnName:     cnName,
-		EnName:     enName,
-		Link:       url,
-		RssLink:    rssLink,
-		PlayStatus: <-playStatus,
-		Area:       area,
-		Category:   category,
-	}, nil
+	series.CnName = cnNameHtml[strings.Index(cnNameHtml, "《")+len("《") : strings.Index(cnNameHtml, "》")]
+	series.EnName = doc.Find(".resource-con .fl-info li:nth-child(1) > strong").Text()
+	series.RssLink = doc.Find(".resource-tit h2 a").AttrOr("href", "")
+	series.Area = doc.Find(".resource-con .fl-info li:nth-child(2) > strong").Text()
+	series.Category = doc.Find(".resource-con .fl-info li:nth-child(6) > strong").Text()
+	if series.Poster == "" {
+		series.Poster = doc.Find(".resource-con > div.fl-img > div.imglink > a").AttrOr("href", "")
+	}
+	series.Link = url
+	return nil
 }
