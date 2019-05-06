@@ -7,6 +7,7 @@ import (
 	"github.com/dongfg/bluebell/consul"
 	"github.com/dongfg/bluebell/controller"
 	"github.com/gin-gonic/gin"
+	"github.com/gobuffalo/packr/v2"
 	"log"
 	"net/http"
 	"os"
@@ -35,8 +36,15 @@ func main() {
 
 func setupRouter() *gin.Engine {
 	r := gin.Default()
-	r.StaticFile("/", "public/index.html")
-	r.StaticFile("/swagger.yml", "public/swagger.yml")
+	box := packr.New("public", "./public")
+	r.GET("/", func(c *gin.Context) {
+		src, _ := box.Find("index.html")
+		c.Data(http.StatusOK, "text/html; charset=utf-8", src)
+	})
+	r.GET("/swagger.yml", func(c *gin.Context) {
+		src, _ := box.Find("swagger.yml")
+		c.Data(http.StatusOK, "text/vnd.yaml; charset=utf-8", src)
+	})
 	return r
 }
 
