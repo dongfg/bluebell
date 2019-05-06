@@ -10,12 +10,13 @@ builds:
   - windows
   goarch:
   - amd64
-archive:
-  replacements:
-    linux: Linux
-    darwin: MacOS
-    windows: Windows
-    amd64: x86_64
+archives:
+  - id: default
+    replacements:
+      linux: Linux
+      darwin: MacOS
+      windows: Windows
+      amd64: x86_64
 checksum:
   name_template: 'checksums.txt'
 snapshot:
