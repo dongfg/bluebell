@@ -15,3 +15,10 @@ git tag -a v0.1.0 -m "First release"
 git push origin v0.1.0
 goreleaser
 ```
+
+### Changelog
+
+#### v0.1.1
+Package static file with `packr`
+#### v0.1.0
+First release
