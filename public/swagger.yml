@@ -1,10 +1,10 @@
 openapi: 3.0.0
 # Added by API Auto Mocking Plugin
 servers:
-  - description: SwaggerHub API Auto Mocking
-    url: https://virtserver.swaggerhub.com/dongfg/bluebell/0.1.0
   - description: Development API
     url: http://localhost:9001
+  - description: SwaggerHub API Auto Mocking
+    url: https://virtserver.swaggerhub.com/dongfg/bluebell/0.1.0
   - description: Production API
     url: https://api.dongfg.com
 info:
@@ -83,7 +83,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ApiResponse'
               example:
-                msg: "missing required parameter 'keyword'"
+                msg: "missing required query parameter 'keyword'"
                 timestamp: 1557038967
         '500':
           description: internal server error
@@ -114,7 +114,30 @@ paths:
           content:
             'application/json':
               schema:
-                $ref: '#/components/schemas/Series'
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Series'
+        '400':
+          description: missing required query parameter
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                msg: "missing required path parameter 'seriesId'"
+                timestamp: 1557038967
+        '500':
+          description: internal server error
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                msg: 'resource server not available'
+                timestamp: 1557038967
   '/series/{seriesId}/episodes':
     get:
       tags:
@@ -135,9 +158,32 @@ paths:
           content:
             'application/json':
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/SeriesEpisodes'
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/SeriesEpisodes'
+        '400':
+          description: missing required query parameter
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                msg: "missing required path parameter 'seriesId'"
+                timestamp: 1557038967
+        '500':
+          description: internal server error
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                msg: 'resource server not available'
+                timestamp: 1557038967
 components:
   schemas:
     ApiResponse:
