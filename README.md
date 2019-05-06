@@ -17,6 +17,8 @@ goreleaser
 ```
 
 ### Changelog
+#### v0.1.4
+enable cgo in docker
 #### v0.1.3
 call `packr2` before build
 #### v0.1.2
