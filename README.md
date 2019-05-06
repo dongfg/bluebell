@@ -17,6 +17,8 @@ goreleaser
 ```
 
 ### Changelog
+#### v0.1.3
+call `packr2` before build
 #### v0.1.2
 fix gorelease Deprecation: [archive](https://goreleaser.com/deprecations/#archive)
 #### v0.1.1
