@@ -1,10 +1,6 @@
 openapi: 3.0.0
 # Added by API Auto Mocking Plugin
 servers:
-  - description: Development API
-    url: http://localhost:9001
-  - description: SwaggerHub API Auto Mocking
-    url: https://virtserver.swaggerhub.com/dongfg/bluebell/0.1.0
   - description: Production API
     url: https://api.dongfg.com
 info:
