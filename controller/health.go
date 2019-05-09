@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"fmt"
+	"github.com/dongfg/bluebell/config"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -10,6 +12,10 @@ type healthController struct {
 
 type healthEndpoint struct {
 	Status string
+	Series struct {
+		Domain string
+		Status string
+	}
 }
 
 func newHealthController(g *gin.RouterGroup) {
@@ -18,7 +24,21 @@ func newHealthController(g *gin.RouterGroup) {
 }
 
 func (controller *healthController) healthCheck(c *gin.Context) {
-	c.JSON(http.StatusOK, healthEndpoint{
+	health := healthEndpoint{
 		Status: "Normal",
-	})
+		Series: struct {
+			Domain string
+			Status string
+		}{Domain: config.Basic.Series.Domain, Status: "Normal"},
+	}
+
+	r, err := http.Get(fmt.Sprintf("http://%s", config.Basic.Series.Domain))
+	if err != nil {
+		health.Series.Status = err.Error()
+	} else {
+		health.Series.Status = r.Status
+		defer r.Body.Close()
+	}
+
+	c.JSON(http.StatusOK, health)
 }
