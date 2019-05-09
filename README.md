@@ -17,6 +17,8 @@ goreleaser
 ```
 
 ### Changelog
+#### v0.1.5
+only keep production server
 #### v0.1.4
 enable cgo in docker
 #### v0.1.3
