@@ -4,7 +4,7 @@ servers:
   - description: Production API
     url: https://api.dongfg.com
 info:
-  version: "0.1.0"
+  version: "1.0.0"
   title: Bluebell
   contact:
     url: "https://dongfg.com"
