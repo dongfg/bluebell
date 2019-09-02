@@ -8,6 +8,18 @@ export GO111MODULE=on
 # add package
 go get xxx
 ```
+config format:
+```yaml
+port: 9001
+service:
+  name: bluebell
+  address: 10.64.60.246
+  port: 9001
+  check-url: http://10.64.60.246:9001/health
+  check-interval: 100s
+series:
+  domain: www.zmz2019.com
+```
 
 ### Release
 ```
