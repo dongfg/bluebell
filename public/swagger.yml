@@ -3,8 +3,10 @@ openapi: 3.0.0
 servers:
   - description: Production API
     url: https://api.dongfg.com
+  - description: Development API
+    url: http://localhost:9001
 info:
-  version: "1.0.0"
+  version: "1.1.0"
   title: Bluebell
   contact:
     url: "https://dongfg.com"
@@ -21,6 +23,8 @@ tags:
     description: System Level Api
   - name: Series
     description: 剧集搜索
+  - name: TOTP
+    description: 两步验证
 paths:
   '/health':
     get:
@@ -180,6 +184,70 @@ paths:
               example:
                 msg: 'resource server not available'
                 timestamp: 1557038967
+  '/totp/generate':
+    post:
+      tags:
+        - TOTP
+      summary: 根据 secret 生成 TOTP
+      operationId: totpGenerate
+      requestBody:
+        description: TOTP secret
+        required: true
+        content:
+          text/plain:
+            schema:
+              type: string
+      responses:
+        200:
+          description: 'successful operation'
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: 123456
+        400:
+          description: 'error secret format'
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: error message
+                example:
+                  error secret format
+  '/totp/validate':
+    post:
+      tags:
+        - TOTP
+      summary: 根据 secret 验证 code 是否正确
+      operationId: totpValidate
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TotpValidation'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: boolean
+                        description: validate result
+                        example: true
+        '400':
+          description: error reading request body
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                msg: "error reading request body"
+                timestamp: 1557038967
 components:
   schemas:
     ApiResponse:
@@ -266,3 +334,15 @@ components:
           type: string
           description: magnet link
           example: 'magnet:?xt=urn:btih:702778ba56195ed3844bb92e059d320539c530ec'
+    TotpValidation:
+      type: object
+      description: TOTP 验证请求
+      properties:
+        secret:
+          type: string
+          description: TOTP secret
+          example: JBSWY3DPEHPK3PXP
+        code:
+          type: string
+          description: TOTP code, six digital number
+          example: "600285"

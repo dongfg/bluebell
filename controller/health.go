@@ -23,7 +23,7 @@ func newHealthController(g *gin.RouterGroup) {
 	g.GET("", c.healthCheck)
 }
 
-func (controller *healthController) healthCheck(c *gin.Context) {
+func (ctrl *healthController) healthCheck(c *gin.Context) {
 	health := healthEndpoint{
 		Status: "Normal",
 		Series: struct {
