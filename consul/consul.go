@@ -14,7 +14,7 @@ type Service struct {
 	Name          string
 	Address       string
 	Port          int
-	CheckUrl      string
+	CheckURL      string
 	CheckInterval string
 }
 
@@ -49,7 +49,7 @@ func (consul *Consul) Register(service Service) {
 		Address: service.Address,
 		Port:    service.Port,
 		Check: &api.AgentServiceCheck{
-			HTTP:     service.CheckUrl,
+			HTTP:     service.CheckURL,
 			Interval: service.CheckInterval,
 		},
 	})

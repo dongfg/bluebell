@@ -5,15 +5,17 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// Basic global config
 var Basic Config
 
+// Config application config
 type Config struct {
 	Port    int
 	Service struct {
 		Name          string
 		Address       string
 		Port          int
-		CheckUrl      string `yaml:"check-url"`
+		CheckURL      string `yaml:"check-url"`
 		CheckInterval string `yaml:"check-interval"`
 	}
 	Series struct {
@@ -21,6 +23,7 @@ type Config struct {
 	}
 }
 
+// Load config from consul server
 func Load(client *consul.Consul) error {
 	rawConfig := client.Fetch("config/bluebell/yaml")
 	config := Config{}
