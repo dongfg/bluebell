@@ -9,6 +9,7 @@ import (
 func Register(r *gin.Engine) {
 	newHealthController(r.Group("/health"))
 	newSeriesController(r.Group("/series"))
+	newTotpController(r.Group("/totp"))
 }
 
 func success() gin.H {

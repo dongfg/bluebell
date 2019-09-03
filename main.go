@@ -56,6 +56,7 @@ func setupServer(srv *http.Server) {
 		}
 	}()
 
+	log.Printf("Start Server @ %s\n", srv.Addr)
 	client.Register(consul.Service(config.Basic.Service))
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
