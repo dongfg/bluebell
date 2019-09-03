@@ -74,7 +74,7 @@ func newSeriesController(g *gin.RouterGroup) {
 	g.GET("/:seriesId/episodes", c.seriesEpisodes)
 }
 
-func (controller *seriesController) seriesSearch(c *gin.Context) {
+func (ctrl *seriesController) seriesSearch(c *gin.Context) {
 	var query seriesSearchQuery
 	if err := c.ShouldBindQuery(&query); err != nil {
 		c.JSON(http.StatusBadRequest, failed(err.Error()))
@@ -115,7 +115,7 @@ func (controller *seriesController) seriesSearch(c *gin.Context) {
 	c.JSON(http.StatusOK, data(seriesSearch))
 }
 
-func (controller *seriesController) seriesDetail(c *gin.Context) {
+func (ctrl *seriesController) seriesDetail(c *gin.Context) {
 	seriesId := c.Param("seriesId")
 	if seriesId == "" {
 		c.JSON(http.StatusBadRequest, failed("missing path param 'seriesId'"))
@@ -134,7 +134,7 @@ func (controller *seriesController) seriesDetail(c *gin.Context) {
 	c.JSON(http.StatusOK, series)
 }
 
-func (controller *seriesController) seriesEpisodes(c *gin.Context) {
+func (ctrl *seriesController) seriesEpisodes(c *gin.Context) {
 	seriesId := c.Param("seriesId")
 	if seriesId == "" {
 		c.JSON(http.StatusBadRequest, failed("missing path param 'seriesId'"))
