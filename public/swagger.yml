@@ -6,7 +6,7 @@ servers:
   - description: Development API
     url: http://localhost:9001
 info:
-  version: "1.0.0"
+  version: "1.1.0"
   title: Bluebell
   contact:
     url: "https://dongfg.com"
