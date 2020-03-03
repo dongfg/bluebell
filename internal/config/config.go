@@ -1,8 +1,8 @@
 package config
 
 import (
-	"github.com/dongfg/bluebell/internal/consul"
 	"gopkg.in/yaml.v2"
+	"os"
 )
 
 // Basic global config
@@ -24,12 +24,22 @@ type Config struct {
 }
 
 // Load config from consul server
-func Load(client *consul.Consul) error {
-	rawConfig := client.Fetch("config/bluebell/yaml")
-	config := Config{}
-	err := yaml.Unmarshal([]byte(rawConfig), &config)
+func Load() error {
+	configPath := "config.yml"
+	if len(os.Args) > 1 {
+		configPath = os.Args[1]
+	}
+	f, err := os.Open(configPath)
 	if err != nil {
-		return err
+		panic(err)
+	}
+	defer f.Close()
+
+	var config Config
+	decoder := yaml.NewDecoder(f)
+	err = decoder.Decode(&config)
+	if err != nil {
+		panic(err)
 	}
 	Basic = config
 	return nil

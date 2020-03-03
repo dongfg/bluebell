@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/dongfg/bluebell/internal/config"
-	"github.com/dongfg/bluebell/internal/consul"
 	"github.com/dongfg/bluebell/internal/controller"
 	"github.com/gin-gonic/gin"
 	"github.com/gobuffalo/packr/v2"
@@ -16,11 +15,8 @@ import (
 	"time"
 )
 
-var client *consul.Consul
-
 func init() {
-	client = consul.New(os.Getenv("CONSUL_ADDR"), os.Getenv("CONSUL_TOKEN"))
-	if err := config.Load(client); err != nil {
+	if err := config.Load(); err != nil {
 		panic(err)
 	}
 }
@@ -57,7 +53,6 @@ func setupServer(srv *http.Server) {
 	}()
 
 	log.Printf("Start Server @ %s\n", srv.Addr)
-	client.Register(consul.Service(config.Basic.Service))
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
@@ -65,7 +60,6 @@ func setupServer(srv *http.Server) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	client.Deregister("bluebell")
 	if err := srv.Shutdown(ctx); err != nil {
 		log.Fatal("Server Shutdown:", err)
 	}

@@ -10,7 +10,6 @@ require (
 	github.com/gobuffalo/gogen v0.1.1 // indirect
 	github.com/gobuffalo/packr/v2 v2.2.0
 	github.com/golang/protobuf v1.3.1 // indirect
-	github.com/hashicorp/consul/api v1.0.1
 	github.com/json-iterator/go v1.1.6 // indirect
 	github.com/karrick/godirwalk v1.8.2 // indirect
 	github.com/mattn/go-isatty v0.0.7 // indirect
