@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/dongfg/bluebell/consul"
+	"github.com/dongfg/bluebell/internal/consul"
 	"gopkg.in/yaml.v2"
 )
 

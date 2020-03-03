@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/dongfg/bluebell/config"
-	"github.com/dongfg/bluebell/consul"
-	"github.com/dongfg/bluebell/controller"
+	"github.com/dongfg/bluebell/internal/config"
+	"github.com/dongfg/bluebell/internal/consul"
+	"github.com/dongfg/bluebell/internal/controller"
 	"github.com/gin-gonic/gin"
 	"github.com/gobuffalo/packr/v2"
 	"log"
@@ -36,7 +36,7 @@ func main() {
 
 func setupRouter() *gin.Engine {
 	r := gin.Default()
-	box := packr.New("public", "./public")
+	box := packr.New("static", "./static")
 	r.GET("/", func(c *gin.Context) {
 		src, _ := box.Find("index.html")
 		c.Data(http.StatusOK, "text/html; charset=utf-8", src)

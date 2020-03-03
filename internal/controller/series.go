@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
-	"github.com/dongfg/bluebell/config"
+	"github.com/dongfg/bluebell/internal/config"
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
 	"net/http"
