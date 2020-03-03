@@ -36,7 +36,7 @@ func main() {
 
 func setupRouter() *gin.Engine {
 	r := gin.Default()
-	box := packr.New("static", "./static")
+	box := packr.New("static", "../../static")
 	r.GET("/", func(c *gin.Context) {
 		src, _ := box.Find("index.html")
 		c.Data(http.StatusOK, "text/html; charset=utf-8", src)
