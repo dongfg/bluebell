@@ -3,7 +3,10 @@ before:
     - go mod download
     - packr2
 builds:
-  - goos:
+  - env:
+      - CGO_ENABLED=0
+    main: ./cmd/bluebell
+    goos:
       - linux
       - darwin
       - windows

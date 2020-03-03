@@ -2,7 +2,7 @@ package controller
 
 import (
 	"fmt"
-	"github.com/dongfg/bluebell/config"
+	"github.com/dongfg/bluebell/internal/config"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
