@@ -1,0 +1,31 @@
+before:
+  hooks:
+    - make clean setup gen
+builds:
+  - env:
+      - CGO_ENABLED=0
+    main: ./cmd/bluebell
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+archives:
+  - replacements:
+      linux: Linux
+      darwin: MacOS
+      windows: Windows
+      amd64: x86_64
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - LICENSE
+      - README.md
+      - CHANGELOG
+      - configs/config-example.yml
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ .Tag }}-next"

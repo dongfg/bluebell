@@ -1,4 +1,4 @@
-package controller
+package service
 
 import (
 	"encoding/json"
@@ -6,42 +6,24 @@ import (
 	"errors"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
-	"github.com/dongfg/bluebell/config"
-	"github.com/gin-gonic/gin"
+	"github.com/dongfg/bluebell/internal/config"
+	"github.com/dongfg/bluebell/internal/payload"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
 )
 
-type seriesController struct {
+// SeriesService ref
+type SeriesService struct {
+	opts *SeriesServiceOptions
 }
 
-type series struct {
-	ID         string `json:"id"`
-	CnName     string `json:"cnName"`
-	Poster     string `json:"poster"`
-	EnName     string `json:"enName,omitempty"`
-	Link       string `json:"link,omitempty"`
-	RssLink    string `json:"rssLink,omitempty"`
-	PlayStatus string `json:"playStatus,omitempty"`
-	Area       string `json:"area,omitempty"`
-	Category   string `json:"category,omitempty"`
-}
-
-type seriesEpisode struct {
-	SeriesID string `json:"seriesId"`
-	Name     string `json:"name"`
-	Season   int    `json:"season"`
-	Episode  int    `json:"episode"`
-	Ed2k     string `json:"ed2k,omitempty"`
-	Magnet   string `json:"magnet,omitempty"`
-}
-
-type seriesSearchQuery struct {
-	Keyword string `form:"keyword"`
-	Details bool   `form:"details,default=false"`
+// SeriesServiceOptions service dependency
+type SeriesServiceOptions struct {
+	Conf *config.Config
 }
 
 type seriesSearchResp struct {
@@ -67,102 +49,86 @@ type seriesEpisodesResp struct {
 	} `xml:"channel"`
 }
 
-func newSeriesController(g *gin.RouterGroup) {
-	c := &seriesController{}
-	g.GET("", c.seriesSearch)
-	g.GET("/:seriesId", c.seriesDetail)
-	g.GET("/:seriesId/episodes", c.seriesEpisodes)
+// NewSeriesService
+func NewSeriesService(opts *SeriesServiceOptions) *SeriesService {
+	return &SeriesService{opts}
 }
 
-func (ctrl *seriesController) seriesSearch(c *gin.Context) {
-	var query seriesSearchQuery
-	if err := c.ShouldBindQuery(&query); err != nil {
-		c.JSON(http.StatusBadRequest, failed(err.Error()))
-	}
-
-	url := fmt.Sprintf("http://%s/search/api?keyword=%s&type=resource", config.Basic.Series.Domain, query.Keyword)
+// Search series
+func (svc *SeriesService) Search(query payload.SeriesSearchQuery) ([]payload.Series, error) {
+	domain := svc.opts.Conf.Series.Domain
+	url := fmt.Sprintf("http://%s/search/api?keyword=%s&type=resource", domain, query.Keyword)
 
 	r, err := http.Get(url)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, failed(fmt.Sprintf("资源服务器不可用: %s", err.Error())))
-		return
+		log.Printf("无法访问资源服务器: %s, %s\n", domain, err.Error())
+		return nil, fmt.Errorf("无法访问资源服务器: %s, %s\n", domain, err.Error())
 	}
 	defer r.Body.Close()
 
 	var jsonResp seriesSearchResp
 	if err := json.NewDecoder(r.Body).Decode(&jsonResp); err != nil {
-		c.JSON(http.StatusInternalServerError, failed(fmt.Sprintf("无法解析资源服务器返回的数据: %s", err.Error())))
-		return
+		log.Printf("无法解析资源服务器返回的数据: %s\n", err.Error())
+		return nil, fmt.Errorf("无法解析资源服务器返回的数据: %s", err.Error())
 	}
 
-	var seriesSearch = make([]series, len(jsonResp.Data))
+	var seriesSearch = make([]payload.Series, len(jsonResp.Data))
 
 	for i, item := range jsonResp.Data {
-		series := series{}
+		series := payload.Series{}
 		series.ID = item.ItemID
 		series.CnName = item.Title
 		// convert to large image
 		series.Poster = strings.ReplaceAll(item.Poster, "s_", "")
 		if query.Details {
-			if err := seriesFill(&series); err != nil {
+			if err := svc.seriesFill(&series); err != nil {
 				continue
 			}
 		}
 
 		seriesSearch[i] = series
 	}
-
-	c.JSON(http.StatusOK, data(seriesSearch))
+	return seriesSearch, nil
 }
 
-func (ctrl *seriesController) seriesDetail(c *gin.Context) {
-	seriesID := c.Param("seriesId")
-	if seriesID == "" {
-		c.JSON(http.StatusBadRequest, failed("missing path param 'seriesId'"))
-		return
-	}
-
-	series := series{
+// Detail of series
+func (svc *SeriesService) Detail(seriesID string) (payload.Series, error) {
+	series := payload.Series{
 		ID: seriesID,
 	}
-
-	if err := seriesFill(&series); err != nil {
-		c.JSON(http.StatusInternalServerError, failed(err.Error()))
-		return
-	}
-
-	c.JSON(http.StatusOK, series)
+	err := svc.seriesFill(&series)
+	return series, err
 }
 
-func (ctrl *seriesController) seriesEpisodes(c *gin.Context) {
-	seriesID := c.Param("seriesId")
-	if seriesID == "" {
-		c.JSON(http.StatusBadRequest, failed("missing path param 'seriesId'"))
-		return
+// Episodes of series
+func (svc *SeriesService) Episodes(seriesID string) ([]payload.SeriesEpisode, error) {
+	series := payload.Series{
+		ID: seriesID,
 	}
-
-	series := series{}
-	series.ID = seriesID
-	if err := seriesFill(&series); err != nil || series.RssLink == "" {
-		c.JSON(http.StatusInternalServerError, failed("rssLink not found"))
-		return
+	if err := svc.seriesFill(&series); err != nil {
+		log.Printf("无法获取剧集详情: %s, %s\n", seriesID, err.Error())
+		return nil, err
+	}
+	if series.RssLink == "" {
+		log.Printf("rssLink not found: %s\n", seriesID)
+		return nil, errors.New("rssLink not found")
 	}
 
 	r, err := http.Get(series.RssLink)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, failed(fmt.Sprintf("rssLink无法访问: %s", err.Error())))
-		return
+		log.Printf("rssLink 无法访问: %s\n", series.RssLink)
+		return nil, fmt.Errorf("rssLink 无法访问: %s\n", series.RssLink)
 	}
 	defer r.Body.Close()
 
 	var xmlResp seriesEpisodesResp
 
 	if err := xml.NewDecoder(r.Body).Decode(&xmlResp); err != nil {
-		c.JSON(http.StatusInternalServerError, failed(fmt.Sprintf("无法解析rss返回的数据: %s", err.Error())))
-		return
+		log.Printf("无法解析rss返回的数据: %s, %s\n", series.RssLink, err.Error())
+		return nil, fmt.Errorf("无法解析rss返回的数据: %s, %s\n", series.RssLink, err.Error())
 	}
 
-	var seriesEpisodes = make([]seriesEpisode, len(xmlResp.Channel.Items))
+	var seriesEpisodes = make([]payload.SeriesEpisode, len(xmlResp.Channel.Items))
 
 	seasonEpisodeParse := func(name string) (int, int) {
 		re := regexp.MustCompile(`(?m)[Ss](\d{1,3})[Ee](\d{1,3})`)
@@ -183,7 +149,7 @@ func (ctrl *seriesController) seriesEpisodes(c *gin.Context) {
 
 	for i, item := range xmlResp.Channel.Items {
 		season, episode := seasonEpisodeParse(item.Title)
-		seriesEpisodes[i] = seriesEpisode{
+		seriesEpisodes[i] = payload.SeriesEpisode{
 			SeriesID: seriesID,
 			Name:     item.Title,
 			Season:   season,
@@ -193,17 +159,18 @@ func (ctrl *seriesController) seriesEpisodes(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusOK, data(seriesEpisodes))
+	return seriesEpisodes, nil
 }
 
-func seriesFill(series *series) error {
+func (svc *SeriesService) seriesFill(series *payload.Series) error {
+	domain := svc.opts.Conf.Series.Domain
 	if series.ID == "" {
 		return errors.New("series id must not empty")
 	}
 	playStatus := make(chan string, 1)
 	// get playStatus from api
 	go func() {
-		url := fmt.Sprintf("http://%s/resource/index_json/rid/%s/channel/tv", config.Basic.Series.Domain, series.ID)
+		url := fmt.Sprintf("http://%s/resource/index_json/rid/%s/channel/tv", domain, series.ID)
 
 		r, err := http.Get(url)
 		if err != nil {
@@ -230,7 +197,7 @@ func seriesFill(series *series) error {
 	}()
 
 	// get detail from parse page
-	url := fmt.Sprintf("http://%s/resource/%s", config.Basic.Series.Domain, series.ID)
+	url := fmt.Sprintf("http://%s/resource/%s", domain, series.ID)
 	r, err := http.Get(url)
 	if err != nil {
 		return err
