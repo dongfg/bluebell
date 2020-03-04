@@ -1,17 +1,13 @@
-version: '3.1'
+version: "3"
 services:
   bluebell:
-    image: registry-vpc.cn-hangzhou.aliyuncs.com/dongfg/bluebell
+    network_mode: "bridge"
+    image: registry-vpc.cn-hangzhou.aliyuncs.com/dongfg/bluebell:latest
     container_name: bluebell
     restart: always
     env_file:
       - ../env/bluebell.env
     ports:
       - 20000:20000
-    networks:
-      server:
-        aliases:
-          - bluebell
-networks:
-  server:
-    external: true
+    volumes:
+      - ./config:/opt/config
