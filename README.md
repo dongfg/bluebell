@@ -1,6 +1,12 @@
 ## Bluebell
 > go version of my [api](https://api.dongfg.com)
 -----
+### Usage
+Download latest release and run:
+```shell script
+./bluebell configs/config-example.yml
+```
+
 ### Development
 ```
 # enable vgo (will be default on after 1.13)
