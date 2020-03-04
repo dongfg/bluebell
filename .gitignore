@@ -3,3 +3,5 @@ dist/
 main-packr.go
 packrd/
 bluebell
+wire_gen.go
+packrd
