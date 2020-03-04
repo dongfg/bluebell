@@ -2,27 +2,32 @@ package controller
 
 import (
 	"bytes"
+	"github.com/dongfg/bluebell/internal/payload"
+	"github.com/dongfg/bluebell/internal/service"
 	"github.com/gin-gonic/gin"
-	"github.com/pquerna/otp/totp"
 	"net/http"
-	"time"
 )
 
 type totpController struct {
+	opts *totpControllerOptions
 }
 
-type totpValidation struct {
-	Secret string `json:"secret"`
-	Code   string `json:"code"`
+type totpControllerOptions struct {
+	routerGroup *gin.RouterGroup
+	totpService *service.TotpService
 }
 
-func newTotpController(g *gin.RouterGroup) {
-	c := &totpController{}
-	g.POST("/generate", c.generate)
-	g.POST("/validate", c.validate)
+func newTotpController(opts *totpControllerOptions) {
+	ctrl := &totpController{
+		opts,
+	}
+	routerGroup := ctrl.opts.routerGroup
+	routerGroup.POST("/generate", ctrl.generate)
+	routerGroup.POST("/validate", ctrl.validate)
 }
 
 func (ctrl *totpController) generate(c *gin.Context) {
+	totpService := ctrl.opts.totpService
 	buf := new(bytes.Buffer)
 	_, err := buf.ReadFrom(c.Request.Body)
 	if err != nil {
@@ -31,7 +36,7 @@ func (ctrl *totpController) generate(c *gin.Context) {
 	}
 
 	secret := buf.String()
-	code, err := totp.GenerateCode(secret, time.Now())
+	code, err := totpService.Generate(secret)
 	if err != nil {
 		c.String(http.StatusBadRequest, err.Error())
 		return
@@ -40,12 +45,13 @@ func (ctrl *totpController) generate(c *gin.Context) {
 }
 
 func (ctrl *totpController) validate(c *gin.Context) {
-	var validation totpValidation
+	totpService := ctrl.opts.totpService
+	var validation payload.TotpValidation
 	err := c.BindJSON(&validation)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, failed(err.Error()))
 		return
 	}
 
-	c.JSON(http.StatusOK, data(totp.Validate(validation.Code, validation.Secret)))
+	c.JSON(http.StatusOK, data(totpService.Validate(validation)))
 }

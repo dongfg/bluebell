@@ -2,4 +2,6 @@ dist/
 .idea/
 main-packr.go
 packrd/
-bluebell
+/bluebell
+wire_gen.go
+packrd

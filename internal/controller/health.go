@@ -1,44 +1,29 @@
 package controller
 
 import (
-	"fmt"
-	"github.com/dongfg/bluebell/internal/config"
+	"github.com/dongfg/bluebell/internal/service"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
 type healthController struct {
+	opts *healthControllerOptions
 }
 
-type healthEndpoint struct {
-	Status string
-	Series struct {
-		Domain string
-		Status string
-	}
+type healthControllerOptions struct {
+	routerGroup   *gin.RouterGroup
+	healthService *service.HealthService
 }
 
-func newHealthController(g *gin.RouterGroup) {
-	c := &healthController{}
-	g.GET("", c.healthCheck)
+func newHealthController(opts *healthControllerOptions) {
+	ctrl := &healthController{
+		opts,
+	}
+	routerGroup := ctrl.opts.routerGroup
+	routerGroup.GET("", ctrl.check)
 }
 
-func (ctrl *healthController) healthCheck(c *gin.Context) {
-	health := healthEndpoint{
-		Status: "Normal",
-		Series: struct {
-			Domain string
-			Status string
-		}{Domain: config.Basic.Series.Domain, Status: "Normal"},
-	}
-
-	r, err := http.Get(fmt.Sprintf("http://%s", config.Basic.Series.Domain))
-	if err != nil {
-		health.Series.Status = err.Error()
-	} else {
-		health.Series.Status = r.Status
-		defer r.Body.Close()
-	}
-
-	c.JSON(http.StatusOK, health)
+func (ctrl *healthController) check(c *gin.Context) {
+	healthService := ctrl.opts.healthService
+	c.JSON(http.StatusOK, healthService.Check())
 }

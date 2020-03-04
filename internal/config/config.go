@@ -5,26 +5,16 @@ import (
 	"os"
 )
 
-// Basic global config
-var Basic Config
-
 // Config application config
 type Config struct {
-	Port    int
-	Service struct {
-		Name          string
-		Address       string
-		Port          int
-		CheckURL      string `yaml:"check-url"`
-		CheckInterval string `yaml:"check-interval"`
-	}
+	Port   int
 	Series struct {
 		Domain string
 	}
 }
 
-// Load config from consul server
-func Load() error {
+// New config from config.yml file
+func New() *Config {
 	configPath := "config.yml"
 	if len(os.Args) > 1 {
 		configPath = os.Args[1]
@@ -33,7 +23,9 @@ func Load() error {
 	if err != nil {
 		panic(err)
 	}
-	defer f.Close()
+	defer func() {
+		_ = f.Close()
+	}()
 
 	var config Config
 	decoder := yaml.NewDecoder(f)
@@ -41,6 +33,5 @@ func Load() error {
 	if err != nil {
 		panic(err)
 	}
-	Basic = config
-	return nil
+	return &config
 }
