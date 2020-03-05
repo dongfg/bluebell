@@ -1,4 +1,4 @@
-## Bluebell
+## Bluebell [![Go Report Card](https://goreportcard.com/badge/github.com/dongfg/bluebell)](https://goreportcard.com/report/github.com/dongfg/bluebell)
 > go version of my [api](https://api.dongfg.com)
 -----
 ### Usage

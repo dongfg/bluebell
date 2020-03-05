@@ -11,7 +11,7 @@ import (
 type TotpService struct {
 }
 
-// NewTotpService
+// NewTotpService instance
 func NewTotpService() *TotpService {
 	return &TotpService{}
 }
