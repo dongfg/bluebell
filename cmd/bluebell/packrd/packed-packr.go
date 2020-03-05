@@ -26,7 +26,7 @@ var _ = func() error {
 		b := packr.New("static", "../../static")
 		b.SetResolver("index.html", packr.Pointer{ForwardBox: gk, ForwardPath: "cc2ca2c32ae06783cc8d5a1d1c0cdd9f"})
 		b.SetResolver("swagger.yml", packr.Pointer{ForwardBox: gk, ForwardPath: "2d665353114474c9e39930f6a50d9326"})
-		}()
+	}()
 
 	return nil
 }()

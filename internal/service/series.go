@@ -49,7 +49,7 @@ type seriesEpisodesResp struct {
 	} `xml:"channel"`
 }
 
-// NewSeriesService
+// NewSeriesService instance
 func NewSeriesService(opts *SeriesServiceOptions) *SeriesService {
 	return &SeriesService{opts}
 }
@@ -62,7 +62,7 @@ func (svc *SeriesService) Search(query payload.SeriesSearchQuery) ([]payload.Ser
 	r, err := http.Get(url)
 	if err != nil {
 		log.Printf("无法访问资源服务器: %s, %s\n", domain, err.Error())
-		return nil, fmt.Errorf("无法访问资源服务器: %s, %s\n", domain, err.Error())
+		return nil, fmt.Errorf("无法访问资源服务器: %s, %s", domain, err.Error())
 	}
 	defer r.Body.Close()
 
@@ -117,7 +117,7 @@ func (svc *SeriesService) Episodes(seriesID string) ([]payload.SeriesEpisode, er
 	r, err := http.Get(series.RssLink)
 	if err != nil {
 		log.Printf("rssLink 无法访问: %s\n", series.RssLink)
-		return nil, fmt.Errorf("rssLink 无法访问: %s\n", series.RssLink)
+		return nil, fmt.Errorf("rssLink 无法访问: %s", series.RssLink)
 	}
 	defer r.Body.Close()
 
@@ -125,7 +125,7 @@ func (svc *SeriesService) Episodes(seriesID string) ([]payload.SeriesEpisode, er
 
 	if err := xml.NewDecoder(r.Body).Decode(&xmlResp); err != nil {
 		log.Printf("无法解析rss返回的数据: %s, %s\n", series.RssLink, err.Error())
-		return nil, fmt.Errorf("无法解析rss返回的数据: %s, %s\n", series.RssLink, err.Error())
+		return nil, fmt.Errorf("无法解析rss返回的数据: %s, %s", series.RssLink, err.Error())
 	}
 
 	var seriesEpisodes = make([]payload.SeriesEpisode, len(xmlResp.Channel.Items))
