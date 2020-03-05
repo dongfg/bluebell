@@ -6,7 +6,7 @@ type HealthEndpoint struct {
 	Series SeriesHealth `json:"series"`
 }
 
-// Series module health
+// SeriesHealth Series health status
 type SeriesHealth struct {
 	Domain string `json:"domain"`
 	Status string `json:"status"`

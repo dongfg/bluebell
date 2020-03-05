@@ -17,7 +17,7 @@ type HealthServiceOptions struct {
 	Conf *config.Config
 }
 
-// NewHealthService
+// NewHealthService instance
 func NewHealthService(opts *HealthServiceOptions) *HealthService {
 	return &HealthService{opts}
 }
